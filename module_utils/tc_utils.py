@@ -45,7 +45,12 @@ def build_qdisc_command(module, action):
         return cmd
 
     cmd.extend(["handle", module.params["handle"]])
-    cmd.append(module.params["discipline"])
+    
+    # define a classless discipline
+    if module.params["qdisc"] == "root" and module.params["discipline"]:
+        cmd.append(module.params["discipline"])
+        if module.params["options"]:
+            cmd.extend(module.params["options"].split())
 
     return cmd
 
@@ -63,8 +68,10 @@ def build_class_command(module, action):
         return cmd
 
     cmd.append(module.params["discipline"])
-    cmd.extend(["rate", module.params["rate"]])
-    cmd.extend(["ceil", module.params["ceil"]])
+
+    if module.params["discipline"] == "htb":
+        cmd.extend(["rate", module.params["rate"]])
+        cmd.extend(["ceil", module.params["ceil"]])
 
     return cmd
 

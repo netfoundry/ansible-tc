@@ -18,6 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
 from ansible.module_utils.basic import AnsibleModule
+#from ansible.module_utils.api import rate_limit_argument_spec, retry_argument_spec
+#from ansible.module_utils._text import to_native
+from ansible.errors import AnsibleError
 import ansible.module_utils.tc_utils as tc_utils # pylint: disable=E0611,E0401
 
 
@@ -185,9 +188,10 @@ def main():
         dict(
             parent=dict(required=False, default="1:0", type="str"),
             classid=dict(required=False, default="1:1", type="str"),
-            discipline=dict(required=False, default="htb", type="str"),
-            rate=dict(required=True, type='str'),
-            ceil=dict(required=False, type='str')
+            discipline=dict(required=False, default="htb", choices=["htb", "netem"], type="str"),
+            rate=dict(required=False, type='str'),
+            ceil=dict(required=False, type='str'),
+            options=dict(required=False, type='str')
         )
     )
 
@@ -196,6 +200,13 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
+
+    if module.params["discipline"] == "htb":
+        if not module.params["rate"]:
+            raise AnsibleError('Need rate for default class discipline \"{}\"".'.format(module.params["discipline"]))
+    elif module.params["discipline"] == "netem":
+        if not module.params["rate"] and not module.params["options"]:
+            raise AnsibleError('Need rate or options for class discipline \"{}\"".'.format(module.params["discipline"]))
 
     state = module.params["state"]
     action = tc_utils.set_action(state)

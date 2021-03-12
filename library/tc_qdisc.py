@@ -96,14 +96,14 @@ STR_CHANGE = "CHANGE"
 def _check_current_qdisc(module):
     """ Check what the current qdisc for the specicified device is """
     qdisc_set = tc_utils.get_current("qdisc", module).split("\n")[-2].split(" ")
+#    import q; q(module)
 
     (major, sep, _) = module.params["handle"].partition(":")
 
     if qdisc_set[1] == DEFAULT_QDISC:
         return STR_DEFAULT
-    elif qdisc_set[1] == module.params["discipline"]:
-        if qdisc_set[2] == "".join([major, sep]):
-            return STR_MATCH
+#    elif qdisc_set == ['qdisc', module.params["discipline"], qdisc_set[2] == "".join([major, sep]):
+ #           return STR_MATCH
 
     return STR_CHANGE
 
@@ -116,7 +116,8 @@ def main():
         dict(
             handle=dict(required=False, default="1:0", type="str"),
             qdisc=dict(required=False, default="root", choices=["root", "ingress"], type="str"),
-            discipline=dict(required=False, default="htb", type="str")
+            discipline=dict(required=False, default="htb", type="str"),
+            options=dict(required=False, type='str')
         )
     )
 
@@ -162,6 +163,7 @@ def main():
         module.exit_json(changed=False)
 
     cmd = tc_utils.build_qdisc_command(module, action)
+#    import q; q(cmd)
     (rco, out, err) = module.run_command(cmd)
     if rco is not None and rco != 0:
         module.fail_json(msg=err, rc=rco)
